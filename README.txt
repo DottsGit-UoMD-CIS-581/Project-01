@@ -1,5 +1,6 @@
-Make sure that the 'covid19_cases_polynomial_regression.py' file is in the same directory as the 'Data' folder.
+I have provided 2 archive file types because I was unsure of which one you wanted.  Both hold the same source code and structure.
 
+Make sure that the 'covid19_cases_polynomial_regression.py' file is in the same directory as the 'Data' folder.
 The 'Data' folder must contain 'test.dat' and 'train.dat'.
 
 You are going to need python installed. Im using 3.11.8.
