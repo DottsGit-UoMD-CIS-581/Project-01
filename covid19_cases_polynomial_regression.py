@@ -20,30 +20,28 @@ def load_data(filename):
 
 def transform_features(X, degree):
     poly = PolynomialFeatures(degree=degree)
-    return poly.fit_transform(X.reshape(-1, 1))
+    X_poly = poly.fit_transform(X.reshape(-1, 1))
+    X_poly_scaled = StandardScaler().fit_transform(X_poly)
+    return X_poly_scaled
 
 def cross_validate(X, y, degrees, lambdas, folds=12):
-
-    # set beginning variable
-    kf = KFold(n_splits=folds)
+    # Set beginning variable, shuffle keeps the data in the same order
+    kf = KFold(n_splits=folds, shuffle=False)
     best_val_rmse = np.inf
     best_degree = 0
     best_lambda = 0
     best_avg_rmse_per_degree = []
+    degree_28_cv_data = [np.inf, np.inf, np.inf]
     setup_output_files()
 
     # Loop through each polynomial degree
     for degree in degrees:
-        # Setup for degree 28 since it was specifically requested
-        if degree == 28:
-            degree_28_rmse = np.inf
-            degree_28_lamda = 0
-
         # Loop through each lambda value
         for lambda_val in lambdas:
             avg_validation_rmse = 0
             avg_train_rmse = 0
             X_poly = transform_features(X, degree)
+
             # Main cross validation section
             for train_index, val_index in kf.split(X_poly):
                 X_train, X_val = X_poly[train_index], X_poly[val_index]
@@ -65,17 +63,15 @@ def cross_validate(X, y, degrees, lambdas, folds=12):
                 best_lambda = lambda_val
             
             # Storing the output for degree 28
-            if degree == 28 and avg_validation_rmse < degree_28_rmse:
-                degree_28_val_rmse = avg_validation_rmse
-                degree_28_train_rmse = avg_train_rmse
-                degree_28_lamda = lambda_val
-                degree_28_cv_data = [degree_28_lamda, degree_28_val_rmse, degree_28_train_rmse]
+            if degree == 28 and avg_validation_rmse < degree_28_cv_data[1]:
+                degree_28_cv_data = [lambda_val, avg_validation_rmse, avg_train_rmse]
 
             # Recording the data at every lambda and degree combination
             record_cv_data(degree, lambda_val,  avg_train_rmse, avg_validation_rmse, level='full')
         # Recording the best data at every degree
         record_cv_data(degree, best_lambda, best_train_rmse, best_val_rmse, level='partial')
         best_avg_rmse_per_degree.append(best_val_rmse)
+
     return best_degree, best_lambda, best_avg_rmse_per_degree, degree_28_cv_data
 
 def setup_output_files():
@@ -142,6 +138,7 @@ test_rmse = np.sqrt(mean_squared_error(y_test, y_test_pred))
 # Do it also for the 28 degree polynomial
 train_28_rmse = np.sqrt(mean_squared_error(y_train, y_28_train_pred))
 test_28_rmse = np.sqrt(mean_squared_error(y_test, y_28_test_pred))
+
 print("-"*75)
 print("Optimal Model")
 print("-"*75)
@@ -153,7 +150,7 @@ print(f"Coefficient-weights:\n{model.coef_}")
 print("-"*75)
 print("Degree 28 Data")
 print("-"*75)
-print(f"Degree: 28")
+print("Degree: 28")
 print(f"Lambda: {degree_28_cv_data[0]}")
 print(f"Train RMSE: {train_28_rmse}")
 print(f"Test RMSE: {test_28_rmse}")
@@ -166,8 +163,8 @@ predictions_scaled = model.predict(range_x_poly)
 
 # Generate predictions in the scaled space for the full line on degree 28
 range_x_28 = np.linspace(X_train_scaled.min(), X_train_scaled.max(), 1000)
-range_x_poly_28 = transform_features(range_x, 28)
-predictions_scaled_28 = model.predict(range_x_poly)
+range_x_poly_28 = transform_features(range_x_28, 28)
+predictions_scaled_28 = model_28.predict(range_x_poly_28)
 
 # Inverse transform the predictions to the original scale
 predictions_original = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).ravel()
