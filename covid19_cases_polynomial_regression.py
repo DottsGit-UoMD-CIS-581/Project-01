@@ -49,10 +49,11 @@ def cross_validate(X, y, degrees, lambdas, folds=12):
         for lambda_val in lambda_vals:
             avg_validation_rmse = 0
             avg_train_rmse = 0
-            X_poly = PolynomialFeatures(degree=degree).fit_transform(X.reshape(-1, 1))
 
             # Main cross validation section
-            for train_index, val_index in kf.split(X_poly):
+            for train_index, val_index in kf.split(X):
+                X_scaled = StandardScaler().fit_transform(X.reshape(-1,1))
+                X_poly = PolynomialFeatures(degree=degree).fit_transform(X_scaled)
                 X_train, X_val = X_poly[train_index], X_poly[val_index]                
                 y_train, y_val = y[train_index], y[val_index]
                 
@@ -124,7 +125,7 @@ def record_cv_data(degree, lambda_val, avg_train_rmse, avg_validation_rmse, leve
         writer.writerow({'Degree': degree, 'Lambda': lambda_val, 'CV Train RMSE': avg_train_rmse, 'CV Test RMSE': avg_validation_rmse})
 
 # Load the data
-X_train, y_train = load_data('Data/train_old.dat')
+X_train, y_train = load_data('Data/train.dat')
 X_test, y_test = load_data('Data/test.dat')
 
 # Scale the input and output
