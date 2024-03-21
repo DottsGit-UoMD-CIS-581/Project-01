@@ -65,7 +65,7 @@ def cross_validate(X, y, degrees, lambdas, folds=12):
                 y_train_scaled = y_scaler.fit_transform(y_train.reshape(-1, 1)).ravel()
 
                 # Train the model
-                model = Ridge(alpha=lambda_val, solver="cholesky")
+                model = Ridge(alpha=lambda_val, solver='cholesky')
                 model.fit(X_train_scaled, y_train_scaled)
 
                 # Make predictions on the validation set
